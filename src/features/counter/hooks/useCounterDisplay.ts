@@ -2,13 +2,19 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 
 import { useAppDispatch, useAppSelector } from "../../../store/hooks";
-import { counterActions, counterSelectors, MAX_COUNTER_VALUE } from "../store";
+import {
+  counterActions,
+  counterSelectors,
+  MAX_COUNTER_VALUE,
+  toTotalSeconds,
+} from "../store";
 
 export const useCounterDisplay = () => {
   const dispatch = useAppDispatch();
 
   const currentValue = useAppSelector(counterSelectors.selectCounterValue);
   const isEditMode = useAppSelector((state) => state.counter.isEditMode);
+  const isTimerMode = useAppSelector((state) => state.counter.isTimerMode);
 
   const hiddenInputRef = useRef<HTMLInputElement>(null);
 
@@ -29,13 +35,22 @@ export const useCounterDisplay = () => {
 
   const changeCurrentValue = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value) || undefined;
-    if (value && value > MAX_COUNTER_VALUE) {
-      toast.error(`Valor máximo permitido é ${MAX_COUNTER_VALUE}`, {
-        id: "max-value-error",
-      });
-    } else {
-      dispatch(counterActions.setInitialValue(value));
+
+    if (value !== undefined) {
+      const valueToValidate = isTimerMode ? toTotalSeconds(value) : value;
+
+      if (valueToValidate > MAX_COUNTER_VALUE) {
+        toast.error(
+          `Valor máximo permitido é ${isTimerMode ? "99:59:59" : MAX_COUNTER_VALUE}`,
+          {
+            id: "max-value-error",
+          },
+        );
+        return;
+      }
     }
+
+    dispatch(counterActions.setInitialValue(value));
   };
 
   useEffect(() => {

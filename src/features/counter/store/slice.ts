@@ -35,12 +35,12 @@ const toDisplayFormat = (totalSeconds: number) => {
   return h * 10000 + m * 100 + s;
 };
 
-const toTotalSeconds = (raw: number) => {
+export const toTotalSeconds = (raw: number) => {
   const str = raw.toString().padStart(6, "0");
   const h = parseInt(str.slice(0, 2)) * 3600;
   const m = parseInt(str.slice(2, 4)) * 60;
   const s = parseInt(str.slice(4, 6));
-  return Math.min(h + m + s, MAX_COUNTER_VALUE);
+  return h + m + s;
 };
 
 export const counterSlice = createSlice({
@@ -60,8 +60,13 @@ export const counterSlice = createSlice({
         state.isTimerRunning = false;
       } else {
         if (state.isTimerMode && state.currentValue !== undefined) {
-          state.currentValue = toTotalSeconds(state.currentValue);
+          state.currentValue = state.currentValue = Math.min(
+            toTotalSeconds(state.currentValue),
+            MAX_COUNTER_VALUE,
+          );
           state.isTimerRunning = true;
+        } else if (!state.currentValue) {
+          state.currentValue = 0;
         }
       }
 
