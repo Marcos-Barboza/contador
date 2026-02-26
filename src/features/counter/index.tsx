@@ -8,6 +8,11 @@ import CounterControls from "./components/CounterControls";
 import CounterDisplay from "./components/CounterDisplay";
 import CounterSettings from "./components/CounterSettings";
 
+const message = {
+  body: "Intervalo atingido!",
+  tag: "checkpoint",
+};
+
 export const Counter = () => {
   const notificationValue = useAppSelector(
     (state) => state.counter.notificationValue,
@@ -24,20 +29,27 @@ export const Counter = () => {
 
   useEffect(() => {
     if (!notificationValue) return;
+    if (!("Notification" in window)) return;
 
     if (isNotification && Notification.permission === "granted") {
       alertSound.current.pause();
       alertSound.current.play();
 
-      new Notification("Contador", {
-        body: "Intervalo atingido!",
-        tag: "checkpoint",
-      });
+      try {
+        new Notification("Contador", message);
+      } catch {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.ready.then((registration) => {
+            registration.showNotification("Contador", message);
+          });
+        } else {
+          toast.info(message.body, { id: message.tag });
+        }
+      }
     } else if (Notification.permission === "default") {
       toast("Permita as notificações para receber alertas!", {
         id: "notification-permission",
       });
-
       Notification.requestPermission();
     }
   }, [isNotification, notificationValue]);
